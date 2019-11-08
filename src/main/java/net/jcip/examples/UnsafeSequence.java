@@ -1,6 +1,6 @@
 package net.jcip.examples;
 
-import net.jcip.annotations.*;
+import net.jcip.annotations.NotThreadSafe;
 
 /**
  * UnsafeSequence
@@ -15,7 +15,10 @@ public class UnsafeSequence {
     /**
      * Returns a unique value.
      */
-    public int getNext() {
+    public int getNext()  {
+        //        Random random = new Random();
+
+//        Thread.sleep(random.nextInt(100));
         return value++;
     }
 }

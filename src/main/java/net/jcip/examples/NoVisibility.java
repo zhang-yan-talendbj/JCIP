@@ -1,5 +1,7 @@
 package net.jcip.examples;
 
+import java.util.Random;
+
 /**
  * NoVisibility
  * <p/>
@@ -11,6 +13,7 @@ package net.jcip.examples;
 public class NoVisibility {
     private static boolean ready;
     private static int number;
+    private static int number2;
 
     private static class ReaderThread extends Thread {
         public void run() {
@@ -21,8 +24,18 @@ public class NoVisibility {
     }
 
     public static void main(String[] args) {
+        for (int i = 0; i<100; i++) {
+        aa();
+        }
+    }
+
+    private static void aa() {
+        Random random = new Random();
         new ReaderThread().start();
-        number = 42;
+        synchronized (random) {
+            number = random.nextInt(100);
+            number2 = number2;
+        }
         ready = true;
     }
 }

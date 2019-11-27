@@ -1,5 +1,7 @@
 package net.jcip.lock.spin;
 
+import net.jcip.lock.CLHLock;
+
 public class SpinLockThread extends Thread {
 
     private CLHLock spinLock;

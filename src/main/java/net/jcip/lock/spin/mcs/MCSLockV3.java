@@ -5,63 +5,53 @@ import net.jcip.lock.spin.AbstractLock;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 public class MCSLockV3 extends AbstractLock {
-
-    private ThreadLocal<Node> threadLocal = ThreadLocal.withInitial(Node::new);
     private volatile Node tail;
+    private ThreadLocal<Node> threadLocal = new ThreadLocal();
+    private AtomicReferenceFieldUpdater<MCSLockV3, Node> updater = AtomicReferenceFieldUpdater.newUpdater(MCSLockV3.class, Node.class, "tail");
 
     public void lock() {
-
-        Node current = threadLocal.get();
-        if (current==null) {
-            current = new Node();
-            threadLocal.set(current);
+        Node currentNode = threadLocal.get();
+        if (currentNode==null) {
+            currentNode = new Node();
+            threadLocal.set(currentNode);
         }
 
-        Node previousNode = update.getAndSet(this, current);
-
-        if (previousNode==null) {
-            //the first node,active this node,get the lock and return
-            current.active = true;
-        } else {
-            previousNode.next = current;
-            while (!current.active) {
-                logList.addLog(" spin for lock.");
+        Node previous = updater.getAndSet(this, currentNode);
+        if (previous!=null) {
+            previous.next = currentNode;
+            while (currentNode.wait) {
 
             }
-            //get the lock ,return
+        } else {
+            currentNode.wait = false;
         }
-
     }
 
     public void unlock() {
+        Node node = threadLocal.get();
 
-        Node current = threadLocal.get();
-
-        if (current==null||!current.active) {
-            return;
+        if (node==null||node.wait) {
+            return ;
         }
 
+        if (node.next==null&&!updater.compareAndSet(this, node, null)) {
 
-        Node next = current.next;
+            while (node.next==null) {
 
-        if (next==null&&!update.compareAndSet(this, current, null)) {
-            while (current.next==null) {
-                logList.addLog(" spin for unlock.");
             }
         }
-        if (next!=null) {
-            next.active = true;
-            current.next = null;
-        }
 
+        if (node.next!=null) {
+            node.next.wait = false;
+            node.next = null;
+        }
         threadLocal.remove();
 
     }
 
-    private AtomicReferenceFieldUpdater<MCSLockV3, Node> update = AtomicReferenceFieldUpdater.newUpdater(MCSLockV3.class, Node.class, "tail");
 
-    static class Node {
-        volatile Node next;
-        volatile boolean active = false;
+    private static class Node {
+        private volatile Node next;
+        private volatile boolean wait = true;
     }
 }

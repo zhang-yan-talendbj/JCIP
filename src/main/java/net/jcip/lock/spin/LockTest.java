@@ -1,6 +1,6 @@
 package net.jcip.lock.spin;
 
-import net.jcip.lock.spin.mcs.MCSLockV3;
+import net.jcip.lock.spin.clh.CLHLock1;
 import org.junit.Assert;
 
 import java.util.concurrent.BrokenBarrierException;
@@ -12,7 +12,7 @@ public class LockTest {
     static int count = 0;
 
     public static void main(String[] args) throws InterruptedException {
-        testLock(new MCSLockV3());
+        testLock(new CLHLock1());
     }
 
     private static void testLock(final AbstractLock clhLock) {
@@ -20,7 +20,7 @@ public class LockTest {
             @Override
             public void run() {
                 System.out.println(count);
-                Assert.assertEquals(10000,count);
+                Assert.assertEquals(1000000,count);
                 clhLock.printLog();
             }
         });
@@ -44,7 +44,7 @@ public class LockTest {
         System.out.println(Thread.currentThread().getName() + ": ready to lock");
         try {
             lock.lock();
-            for (int i = 0; i<1000; i++) ++count;
+            for (int i = 0; i<100000; i++) ++count;
         } finally {
             System.out.println(Thread.currentThread().getName() + ": unlocked");
             lock.unlock();
